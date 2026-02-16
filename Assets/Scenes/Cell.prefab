@@ -50,11 +50,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5145c59f30c5dbe47bea5b788d6b9b76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  background: {fileID: 8491857330987777960}
   text: {fileID: 3489179619368862459}
-  top: {fileID: 0}
-  bottom: {fileID: 0}
-  left: {fileID: 0}
-  right: {fileID: 0}
+  defaultColor: {r: 1, g: 0.84313726, b: 0.7490196, a: 1}
+  transparent: {r: 0.30927375, g: 0.37272078, b: 0.4716981, a: 1}
+  selected: {r: 0.08321467, g: 0.17600375, b: 0.3207547, a: 1}
+  defaultText: {r: 0.5568628, g: 0, b: 0.105882354, a: 1}
+  selectedText: {r: 1, g: 1, b: 1, a: 1}
+  penText: {r: 1, g: 0, b: 0.561501, a: 1}
 --- !u!1 &3489179619368862459
 GameObject:
   m_ObjectHideFlags: 0
@@ -120,7 +123,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 0
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -249,7 +252,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.8425926, b: 0.75, a: 1}
+  m_Color: {r: 1, g: 0.84313726, b: 0.7490196, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
