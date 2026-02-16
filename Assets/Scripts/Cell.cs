@@ -54,6 +54,11 @@ public class Cell : MonoBehaviour
     {
         return guess;
     }
+    public void Clear()
+    {
+        guess = 0;
+        text.GetComponent<TMP_Text>().text = "";
+    }
     public void SetCoordinate(Vector2Int val)
     {
         coordinate = val;

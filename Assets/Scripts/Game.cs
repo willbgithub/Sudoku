@@ -16,7 +16,7 @@ public class Game : MonoBehaviour
     void Start()
     {
         AssignArray();
-        GenerateBoard();
+        GenerateNewBoard();
         ChangeSelection(cells[4, 0]);
     }
     private void ChangeSelection(Cell cell, bool voluntary = false)
@@ -54,17 +54,32 @@ public class Game : MonoBehaviour
                 {
                     for (int column = 0; column < 3; column++)
                     {
-                        cells[column + boxColumn * 3, row + boxRow * 3] = box.GetChild(row*3 + column).GetComponent<Cell>();
-                        cells[column + boxColumn * 3, row + boxRow * 3].SetCoordinate(new Vector2Int(column + boxColumn * 3, row + boxRow * 3));
-                        cells[column + boxColumn * 3, row + boxRow * 3].SetBox(new Vector2Int(boxColumn, boxRow));
+                        Cell cell = box.GetChild(row * 3 + column).GetComponent<Cell>();
+                        cell.SetCoordinate(new Vector2Int(column + boxColumn * 3, row + boxRow * 3));
+                        cell.SetBox(new Vector2Int(boxColumn, boxRow));
+
+                        cells[column + boxColumn * 3, row + boxRow * 3] = cell;
                     }
                 }
             }
         }
     }
-    private void GenerateBoard()
+    private void GenerateNewBoard()
     {
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                cells[column, row].Clear();
+                cells[column, row].SetValue(0);
+                cells[column, row].SetRevealed(false);
+            }
+        }
         NextStep();
+    }
+    private bool IsValidCoordinate(Vector2Int coordinate)
+    {
+        return (coordinate.x >= 0 && coordinate.x < SIZE && coordinate.y >= 0 && coordinate.y < SIZE);
     }
     // Returns false if the step results in a contradiction.
     private bool NextStep()
