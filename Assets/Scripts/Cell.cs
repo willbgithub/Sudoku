@@ -40,6 +40,14 @@ public class Cell : MonoBehaviour
     public void SetRevealed(bool val)
     {
         revealed = val;
+        if (revealed)
+        {
+            text.GetComponent<TMP_Text>().text = value.ToString();
+        }
+        else
+        {
+            text.GetComponent<TMP_Text>().text = "";
+        }
     }
     public bool GetRevealed()
     {
@@ -57,7 +65,10 @@ public class Cell : MonoBehaviour
     public void Clear()
     {
         guess = 0;
-        text.GetComponent<TMP_Text>().text = "";
+        if (!revealed)
+        {
+            text.GetComponent<TMP_Text>().text = "";
+        }
     }
     public void SetCoordinate(Vector2Int val)
     {

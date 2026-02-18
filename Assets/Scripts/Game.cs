@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 public class Game : MonoBehaviour
 {
@@ -12,7 +13,7 @@ public class Game : MonoBehaviour
     private Cell[,] cells = new Cell[SIZE,SIZE];
     [SerializeField] private GameObject cellPrefab, cellBoard;
     private Cell selection;
-    private bool selected = false;
+    private bool selected = false, solving = false;
     void Start()
     {
         AssignArray();
@@ -26,7 +27,7 @@ public class Game : MonoBehaviour
             selected = true;
         }
         selection = cell;
-        List<Cell> targetCells = GetTargetCells(cell);
+        List<Cell> targetCells = GetTargetField(cell);
         for (int row = 0; row<SIZE; row++)
         {
             for (int column = 0; column<SIZE; column++)
@@ -66,6 +67,7 @@ public class Game : MonoBehaviour
     }
     private void GenerateNewBoard()
     {
+        // Reset all cells
         for (int row = 0; row < SIZE; row++)
         {
             for (int column = 0; column < SIZE; column++)
@@ -75,7 +77,103 @@ public class Game : MonoBehaviour
                 cells[column, row].SetRevealed(false);
             }
         }
+        // Starts the generation algorithm.
         NextStep();
+        // Reveal all cells
+        List<Cell> revealed = new List<Cell>();
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                cells[column, row].SetRevealed(true);
+                revealed.Add(cells[column, row]);
+            }
+        }
+        // Unreveal until board is just one step away from being unsolvable
+        while (BoardIsSolvable())
+        {
+            Cell cell = revealed[Random.Range(0, revealed.Count-1)];
+            cell.SetRevealed(false);
+            revealed.Remove(cell);
+        }
+        }
+    private bool BoardIsSolvable()
+    {
+        solving = true;
+
+        while(IdleCellExists())
+        {
+            SolveCell();
+        }
+
+        solving = false;
+
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                cells[column, row].Clear();
+            }
+        }
+        return true;
+    }
+    // returns true if there is any cell that is not solved or not guessed
+    private bool IdleCellExists()
+    {
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                if (!cells[column, row].GetRevealed() && cells[column, row].GetGuess() == 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    // Finds the first unsolved cell that can be solved. If no cells are found, returns false.
+    // Solves the cell by putting the correct guess in.
+    private bool SolveCell()
+    {
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                Cell cell = cells[column, row];
+                // Cell is already solved
+                if (cell.GetRevealed())
+                {
+                    return true;
+                }
+                List<int> potentialAnswers = GetPotentialAnswers(cell, false);
+                // Only has one potential answer
+                if (potentialAnswers.Count == 1)
+                {
+                    cell.SetGuess(potentialAnswers[0]);
+                    return true;
+                }
+                // Only one in target field with a certain potential answer
+                List<Cell> targetField = GetTargetField(cell);
+                for (int i = 0; i < targetField.Count; i++)
+                {
+                    List<int> targetPotentialAnswers = GetPotentialAnswers(targetField[i], false);
+                    for(int j = 0; j < targetPotentialAnswers.Count; j++)
+                    {
+                        if (potentialAnswers.Contains(targetPotentialAnswers[j]))
+                        {
+                            potentialAnswers.Remove(targetPotentialAnswers[j]);
+                        }
+                    }
+                }
+                if (potentialAnswers.Count == 1)
+                {
+                    cell.SetGuess(potentialAnswers[0]);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     private bool IsValidCoordinate(Vector2Int coordinate)
     {
@@ -116,27 +214,35 @@ public class Game : MonoBehaviour
         }
         return false;
     }
-    // Returns the cell with the lowest amount of potential answers.
-    private Cell GetMostSolved()
+    // Finds and returns the cell with the lowest amount of potential answers.
+    private Cell GetMostSolved(bool omniscient = true)
     {
         List<Cell> returnList = new List<Cell>();
+        // Assume the lowest number of potential answers across the board is 9
         int leastAnswers = 9;
         for (int row = 0; row < SIZE; row++)
         {
             for (int column = 0; column < SIZE; column++)
             {
-                if (cells[column, row].GetValue() != 0)
+                Cell cell = cells[column, row];
+
+                // if cell is already solved, abandon it
+                if (omniscient && cell.GetValue() != 0 || !omniscient && solving && cell.GetGuess() != 0)
                 {
                     continue;
                 }
-                int potentialAnswers = CountPotentialAnswers(cells[column, row]);
+
+                int potentialAnswers = CountPotentialAnswers(cell, omniscient);
                 if (potentialAnswers >= leastAnswers)
                 {
                     continue;
                 }
+                
+                // If the potential answers from this cell are lower than leastAnswers, update it
                 leastAnswers = potentialAnswers;
             }
         }
+        print(leastAnswers);
         for (int row = 0; row < SIZE; row++)
         {
             for (int column = 0; column < SIZE; column++)
@@ -145,7 +251,7 @@ public class Game : MonoBehaviour
                 {
                     continue;
                 }
-                int potentialAnswers = CountPotentialAnswers(cells[column, row]);
+                int potentialAnswers = CountPotentialAnswers(cells[column, row], omniscient);
                 if (potentialAnswers > leastAnswers)
                 {
                     continue;
@@ -155,35 +261,44 @@ public class Game : MonoBehaviour
         }
         return returnList[Random.Range(0, returnList.Count)];
     }
-    private List<int> GetPotentialAnswers(Cell cell)
+    private List<int> GetPotentialAnswers(Cell cell, bool omniscient = true)
     {
-        if (cell.GetValue() != 0)
+        // Cell has a value and game knows it; 0 potential answers
+        if (cell.GetValue() != 0 && (omniscient || cell.GetRevealed()))
         {
             return new List<int>();
         }
         List<int> answers = new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        List<Cell> targetCells = GetTargetCells(cell);
+        List<Cell> targetCells = GetTargetField(cell);
         for (int i = 0; i < targetCells.Count; i++)
         {
-            if (!answers.Contains(targetCells[i].GetValue()))
+            if(!omniscient && !cell.GetRevealed() || !answers.Contains(targetCells[i].GetValue()))
             {
                 continue;
             }
+            // If the target cell has a known value in answers, remove it from answers
             answers.Remove(targetCells[i].GetValue());
         }
         return answers;
     }
-    private int CountPotentialAnswers(Cell cell)
+    // Counts number of answers a cell could potentially have without breaking a rule
+    private int CountPotentialAnswers(Cell cell, bool omniscient = true)
     {
-        if (cell.GetValue() != 0)
+        // Cell already has a value and game knows it
+        if (cell.GetValue() != 0 && omniscient)
+        {
+            return 0;
+        }
+        if (cell.GetRevealed() && !omniscient && solving)
         {
             return 0;
         }
         List<int> answers = new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        List<Cell> targetCells = GetTargetCells(cell);
+        List<Cell> targetCells = GetTargetField(cell);
         for (int i = 0; i < targetCells.Count; i++)
         {
-            if (!answers.Contains(targetCells[i].GetValue()))
+            // If the target cell has a known value in answers, remove it from answers
+            if ( !(omniscient && answers.Contains(targetCells[i].GetValue())) && !(!omniscient && targetCells[i].GetRevealed() && solving && answers.Contains(targetCells[i].GetValue())) )
             {
                 continue;
             }
@@ -191,7 +306,8 @@ public class Game : MonoBehaviour
         }
         return answers.Count;
     }
-    private List<Cell> GetTargetCells(Cell cell)
+    // gets all cells in the row, column, and box of the specified cell
+    private List<Cell> GetTargetField(Cell cell)
     {
         List<Cell> targets = new List<Cell>();
         targets = AddNew(targets, GetTargetColumn(cell));
