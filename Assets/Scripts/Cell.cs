@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEditor.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class Cell : MonoBehaviour
@@ -10,29 +11,57 @@ public class Cell : MonoBehaviour
     private Vector2Int coordinate, box;
     [SerializeField] private Color defaultColor, transparent, selected, defaultText, selectedText, penText;
     private bool revealed = false;
+    private Game game;
 
+
+    public void OnPointerEnter(BaseEventData data)
+    {
+        game.OnCellPointerEnter(this);
+    }
+    public void OnPointerExit(BaseEventData data)
+    {
+        game.OnCellPointerExit(this);
+    }
+    public void OnPointerClick(BaseEventData data)
+    {
+        game.OnCellPointerClick(this);
+    }
+    public void SetGame(Game val)
+    {
+        game = val;
+    }
+    public Game GetGame()
+    {
+        return game;
+    }
     /// <summary>
     /// Sets the cell's color. 0 = default, 1 = transparent, 2 = selected
     /// </summary>
-    /// <param name="val">
-    /// Color value to pass.
-    /// </param>
     public void SetColor(int val) // 0 = default, 1 = transparent, 2 = selected
     {
         if (val == 0)
         {
             background.GetComponent<Image>().color = defaultColor;
-            text.GetComponent<TMP_Text>().color = defaultText;  
+            text.GetComponent<TMP_Text>().color = defaultText;
+            text.GetComponent<TMP_Text>().fontStyle = FontStyles.Normal;
         }
         else if (val == 1)
         {
             background.GetComponent<Image>().color = transparent;
             text.GetComponent<TMP_Text>().color = selectedText;
+            text.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
         }
-        else
+        else if (val == 2)
         {
             background.GetComponent<Image>().color = selected;
             text.GetComponent<TMP_Text>().color = selectedText;
+            text.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
+        }
+        else if (val == 4)
+        {
+            background.GetComponent<Image>().color = Color.red;
+            text.GetComponent<TMP_Text>().color = defaultText;
+            text.GetComponent<TMP_Text>().fontStyle = FontStyles.Italic;
         }
     }
     public void SetValue(int val)

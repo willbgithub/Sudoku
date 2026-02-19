@@ -15,16 +15,65 @@ public class Game : MonoBehaviour
     private Cell selection;
     private bool selected = false;
     private bool solving = false; // used by program when trying to see if a board is solvable without cheating
+    [SerializeField] private bool debug = false;
     void Start()
     {
         AssignArray();
         GenerateNewBoard();
         //print(BoardIsSolvable());
     }
+    public void OnCellPointerEnter(Cell cell)
+    {
+        if (selected)
+        {
+            return;
+        }
+        ChangeSelection(cell);
+    }
+    public void OnCellPointerExit(Cell cell)
+    {
+        //if (selected)
+        //{
+        //    return;
+        //}
+        //EmptySelection();
+    }
+    public void OnCellPointerClick(Cell cell)
+    {
+        if (selected && selection == cell)
+        {
+            EmptySelection(true);
+            return;
+        }
+        ChangeSelection(cell, true);
+
+        if (debug)
+        {
+            if (cell.GetRevealed())
+            {
+
+            }
+            else
+            {
+                List<int> potentialAnswers = GetPotentialAnswers(cell, false, true);
+                string message = "";
+                for (int i = 0; i < potentialAnswers.Count-1; i++)
+                {
+                    message += potentialAnswers[i] + ", ";
+                }
+                if (potentialAnswers.Count > 0)
+                {
+                    message += potentialAnswers[potentialAnswers.Count - 1];
+                }
+                print(message);
+            }
+        }
+    }
 
     // Returns true if the board can be solved with only ONE solution
     private bool BoardIsSolvable()
     {
+        print("BoardIsSolvable() called");
         solving = true;
         // Reset guess values of all cells
         for (int row = 0; row < SIZE; row++)
@@ -46,20 +95,32 @@ public class Game : MonoBehaviour
                 {
                     // If the cell already has a guess or is revealed, move past it
                     Cell cell = cells[column, row];
+                    print("NEW CELL: " + new Vector2Int(column, row));
                     if (cell.GetGuess() != 0 || cell.GetRevealed())
                     {
+                        if (cell.GetGuess() != 0)
+                        {
+                            print("cell.GetGuess() = " + cell.GetGuess());
+                        }
+                        if (cell.GetRevealed())
+                        {
+                            print("cell.GetRevealed() = " + cell.GetRevealed());
+                        }
                         continue;
                     }
-                    List<int> potentialAnswers = GetPotentialAnswers(cell);
+                    List<int> potentialAnswers = GetPotentialAnswers(cell, false);
                     // sanity check
                     if (potentialAnswers.Count == 0)
                     {
                         print("THIS SHOULD NOT BE POSSIBLE!!!!");
+                        cell.SetColor(4);
                         return false;
                     }
                     // Cell only has one potential answer: SOLVE!
                     if (potentialAnswers.Count == 1)
                     {
+                        print("potentialAnswers.Count == 1");
+                        print("Solved with " + potentialAnswers[0]);
                         cell.SetGuess(potentialAnswers[0]);
                         solved = true;
                     }
@@ -74,6 +135,8 @@ public class Game : MonoBehaviour
                                 continue;
                             }
                             // Answer is unique! SOLVE!
+                            print("Cell is the only one with this answer.");
+                            print("Solved with " + potentialAnswers[i]);
                             cell.SetGuess(potentialAnswers[i]);
                             solved = true;
                         }
@@ -92,19 +155,21 @@ public class Game : MonoBehaviour
         }
         if (!solved)
         {
+            print("Last run didn't solve any cells. Unsolvable board");
             // Last run did not solve any cells, so the board is unsolvable
             return false;
         }
+        print("Ran out of idle cells. Solvable board.");
         return true;
     }
     // Returns all the possible answers in the entire target field of a given cell
-    private List<int> GetTargetFieldAnswers(Cell cell)
+    private List<int> GetTargetFieldAnswers(Cell cell, bool omniscient = true)
     {
         List<int> potentialAnswers = new List<int>();
         List<Cell> targetField = GetTargetField(cell);
         for (int i = 0; i < targetField.Count; i++)
         {
-            List<int> targetAnswers = GetPotentialAnswers(targetField[i]);
+            List<int> targetAnswers = GetPotentialAnswers(targetField[i], omniscient);
             for (int j =  0; j < targetAnswers.Count; j++)
             {
                 if (potentialAnswers.Contains(targetAnswers[j]))
@@ -119,6 +184,7 @@ public class Game : MonoBehaviour
     // returns true if there is any cell that is not solved or not guessed
     private bool IdleCellExists()
     {
+        print("IdleCellExists() called");
         for (int row = 0; row < SIZE; row++)
         {
             for (int column = 0; column < SIZE; column++)
@@ -126,10 +192,12 @@ public class Game : MonoBehaviour
                 // if a cell is not solved or not guessed, then there is an idle cell. return true
                 if (!cells[column, row].GetRevealed() && cells[column, row].GetGuess() == 0)
                 {
+                    print("Found idle cell: " + new Vector2Int(column, row));
                     return true;
                 }
             }
         }
+        print("No idle cells found.");
         return false;
     }
     private void ChangeSelection(Cell cell, bool voluntary = false)
@@ -156,6 +224,21 @@ public class Game : MonoBehaviour
         }
         cell.SetColor(2);
     }
+    private void EmptySelection(bool voluntary = false)
+    {
+        if (voluntary)
+        {
+            selected = false;
+        }
+        selection = null;
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                cells[column, row].SetColor(0);
+            }
+        }
+    }
     private void AssignArray()
     {
         for (int boxRow = 0; boxRow < 3; boxRow++)
@@ -170,7 +253,7 @@ public class Game : MonoBehaviour
                         Cell cell = box.GetChild(row * 3 + column).GetComponent<Cell>();
                         cell.SetCoordinate(new Vector2Int(column + boxColumn * 3, row + boxRow * 3));
                         cell.SetBox(new Vector2Int(boxColumn, boxRow));
-
+                        cell.SetGame(this);
                         cells[column + boxColumn * 3, row + boxRow * 3] = cell;
                     }
                 }
@@ -184,9 +267,11 @@ public class Game : MonoBehaviour
         {
             for (int column = 0; column < SIZE; column++)
             {
-                cells[column, row].Clear();
-                cells[column, row].SetValue(0);
-                cells[column, row].SetRevealed(false);
+                Cell cell = cells[column, row];
+                cell.Clear();
+                cell.SetValue(0);
+                cell.SetRevealed(false);
+                
             }
         }
         // Starts the generation algorithm.
@@ -197,14 +282,15 @@ public class Game : MonoBehaviour
         {
             for (int column = 0; column < SIZE; column++)
             {
-                cells[column, row].SetRevealed(true);
-                revealed.Add(cells[column, row]);
+                Cell cell = cells[column, row];
+                cell.SetRevealed(true);
+                revealed.Add(cell);
             }
         }
         // Unreveal until board is just one step away from being unsolvable
         while (BoardIsSolvable())
         {
-            Cell cell = revealed[Random.Range(0, revealed.Count-1)];
+            Cell cell = revealed[Random.Range(0, revealed.Count - 1)];
             cell.SetRevealed(false);
             revealed.Remove(cell);
         }
@@ -294,8 +380,12 @@ public class Game : MonoBehaviour
         }
         return returnList[Random.Range(0, returnList.Count)];
     }
-    private List<int> GetPotentialAnswers(Cell cell, bool omniscient = true)
+    private List<int> GetPotentialAnswers(Cell cell, bool omniscient = true, bool debug2 = false)
     {
+        if (debug2)
+        {
+            print("GetPotentialAnswers(" + cell.GetCoordinate() + ", omniscient = " + omniscient + ") called");
+        }
         // Cell has a value and game knows it; 0 potential answers
         if (cell.GetValue() != 0 && (omniscient || cell.GetRevealed()))
         {
@@ -305,12 +395,33 @@ public class Game : MonoBehaviour
         List<Cell> targetCells = GetTargetField(cell);
         for (int i = 0; i < targetCells.Count; i++)
         {
-            if(!omniscient && !cell.GetRevealed() || !answers.Contains(targetCells[i].GetValue()))
+            Cell targetCell = targetCells[i];
+            // If the program knows that all guesses are equal to true values, use the guess value
+            if(solving && answers.Contains(targetCell.GetGuess()))
             {
-                continue;
+                //print("solving = " + solving + " && answers.Contains(" + targetCell.GetGuess() + ") == true");
+                answers.Remove(targetCell.GetGuess());
             }
-            // If the target cell has a known value in answers, remove it from answers
-            answers.Remove(targetCells[i].GetValue());
+            // If the function is omniscient, use the actual value
+            else if (omniscient && answers.Contains(targetCell.GetValue()))
+            {
+                //print("omniscient = " + omniscient + " && answers.Contains(" + targetCell.GetValue() + ") == true");
+                answers.Remove(targetCell.GetValue());
+            }
+            // If the function isn't omniscient, but the cell is revealed, use the actual value
+            else if (targetCell.GetRevealed() && answers.Contains(targetCell.GetValue()))
+            {
+                answers.Remove(targetCell.GetValue());
+            }
+            else
+            {
+                //print("solving = " + solving + " && answers.Contains(" + targetCell.GetGuess() + ") == " + (solving && answers.Contains(targetCell.GetGuess())));
+                if (debug2)
+                {
+                    print("omniscient = " + omniscient + " && answers.Contains(" + targetCell.GetValue() + ") == " + (omniscient && answers.Contains(targetCell.GetValue())));
+                    print("targetCell.GetRevealed() == " + targetCell.GetRevealed() + " && answers.Contains(" + targetCell.GetValue() + ") == " + (targetCell.GetRevealed() && answers.Contains(targetCell.GetValue())));
+                }
+            }
         }
         return answers;
     }
