@@ -13,12 +13,124 @@ public class Game : MonoBehaviour
     private Cell[,] cells = new Cell[SIZE,SIZE];
     [SerializeField] private GameObject cellPrefab, cellBoard;
     private Cell selection;
-    private bool selected = false, solving = false;
+    private bool selected = false;
+    private bool solving = false; // used by program when trying to see if a board is solvable without cheating
     void Start()
     {
         AssignArray();
         GenerateNewBoard();
-        ChangeSelection(cells[4, 0]);
+        //print(BoardIsSolvable());
+    }
+
+    // Returns true if the board can be solved with only ONE solution
+    private bool BoardIsSolvable()
+    {
+        solving = true;
+        // Reset guess values of all cells
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                cells[column, row].Clear();
+            }
+        }
+        bool solved = true;
+        // Attempt to solve every idle cell
+        while (IdleCellExists() && solved)
+        {
+            solved = false;
+            // Attempt to solve a cell
+            for (int row = 0; row < SIZE; row++)
+            {
+                for (int column = 0; column < SIZE; column++)
+                {
+                    // If the cell already has a guess or is revealed, move past it
+                    Cell cell = cells[column, row];
+                    if (cell.GetGuess() != 0 || cell.GetRevealed())
+                    {
+                        continue;
+                    }
+                    List<int> potentialAnswers = GetPotentialAnswers(cell);
+                    // sanity check
+                    if (potentialAnswers.Count == 0)
+                    {
+                        print("THIS SHOULD NOT BE POSSIBLE!!!!");
+                        return false;
+                    }
+                    // Cell only has one potential answer: SOLVE!
+                    if (potentialAnswers.Count == 1)
+                    {
+                        cell.SetGuess(potentialAnswers[0]);
+                        solved = true;
+                    }
+                    // Multiple potential answers; see if it has a unique one in its target field
+                    else if (potentialAnswers.Count > 1)
+                    {
+                        List<int> targetAnswers = GetTargetFieldAnswers(cell);
+                        for (int i = 0; i < potentialAnswers.Count; i++)
+                        {
+                            if (targetAnswers.Contains(potentialAnswers[i]))
+                            {
+                                continue;
+                            }
+                            // Answer is unique! SOLVE!
+                            cell.SetGuess(potentialAnswers[i]);
+                            solved = true;
+                        }
+                    }
+                }
+            }
+        }
+        solving = false;
+        // Reset guess values of all cells, again
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                cells[column, row].Clear();
+            }
+        }
+        if (!solved)
+        {
+            // Last run did not solve any cells, so the board is unsolvable
+            return false;
+        }
+        return true;
+    }
+    // Returns all the possible answers in the entire target field of a given cell
+    private List<int> GetTargetFieldAnswers(Cell cell)
+    {
+        List<int> potentialAnswers = new List<int>();
+        List<Cell> targetField = GetTargetField(cell);
+        for (int i = 0; i < targetField.Count; i++)
+        {
+            List<int> targetAnswers = GetPotentialAnswers(targetField[i]);
+            for (int j =  0; j < targetAnswers.Count; j++)
+            {
+                if (potentialAnswers.Contains(targetAnswers[j]))
+                {
+                    continue;
+                }
+                potentialAnswers.Add(targetAnswers[j]);
+            }
+        }
+        return potentialAnswers;
+    }
+    // returns true if there is any cell that is not solved or not guessed
+    private bool IdleCellExists()
+    {
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int column = 0; column < SIZE; column++)
+            {
+                // if a cell is not solved or not guessed, then there is an idle cell. return true
+                if (!cells[column, row].GetRevealed() && cells[column, row].GetGuess() == 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     private void ChangeSelection(Cell cell, bool voluntary = false)
     {
@@ -96,84 +208,6 @@ public class Game : MonoBehaviour
             cell.SetRevealed(false);
             revealed.Remove(cell);
         }
-        }
-    private bool BoardIsSolvable()
-    {
-        solving = true;
-
-        while(IdleCellExists())
-        {
-            SolveCell();
-        }
-
-        solving = false;
-
-        for (int row = 0; row < SIZE; row++)
-        {
-            for (int column = 0; column < SIZE; column++)
-            {
-                cells[column, row].Clear();
-            }
-        }
-        return true;
-    }
-    // returns true if there is any cell that is not solved or not guessed
-    private bool IdleCellExists()
-    {
-        for (int row = 0; row < SIZE; row++)
-        {
-            for (int column = 0; column < SIZE; column++)
-            {
-                if (!cells[column, row].GetRevealed() && cells[column, row].GetGuess() == 0)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    // Finds the first unsolved cell that can be solved. If no cells are found, returns false.
-    // Solves the cell by putting the correct guess in.
-    private bool SolveCell()
-    {
-        for (int row = 0; row < SIZE; row++)
-        {
-            for (int column = 0; column < SIZE; column++)
-            {
-                Cell cell = cells[column, row];
-                // Cell is already solved
-                if (cell.GetRevealed())
-                {
-                    return true;
-                }
-                List<int> potentialAnswers = GetPotentialAnswers(cell, false);
-                // Only has one potential answer
-                if (potentialAnswers.Count == 1)
-                {
-                    cell.SetGuess(potentialAnswers[0]);
-                    return true;
-                }
-                // Only one in target field with a certain potential answer
-                List<Cell> targetField = GetTargetField(cell);
-                for (int i = 0; i < targetField.Count; i++)
-                {
-                    List<int> targetPotentialAnswers = GetPotentialAnswers(targetField[i], false);
-                    for(int j = 0; j < targetPotentialAnswers.Count; j++)
-                    {
-                        if (potentialAnswers.Contains(targetPotentialAnswers[j]))
-                        {
-                            potentialAnswers.Remove(targetPotentialAnswers[j]);
-                        }
-                    }
-                }
-                if (potentialAnswers.Count == 1)
-                {
-                    cell.SetGuess(potentialAnswers[0]);
-                    return true;
-                }
-            }
-        }
-        return false;
     }
     private bool IsValidCoordinate(Vector2Int coordinate)
     {
@@ -242,7 +276,6 @@ public class Game : MonoBehaviour
                 leastAnswers = potentialAnswers;
             }
         }
-        print(leastAnswers);
         for (int row = 0; row < SIZE; row++)
         {
             for (int column = 0; column < SIZE; column++)

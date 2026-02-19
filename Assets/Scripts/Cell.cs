@@ -11,6 +11,12 @@ public class Cell : MonoBehaviour
     [SerializeField] private Color defaultColor, transparent, selected, defaultText, selectedText, penText;
     private bool revealed = false;
 
+    /// <summary>
+    /// Sets the cell's color. 0 = default, 1 = transparent, 2 = selected
+    /// </summary>
+    /// <param name="val">
+    /// Color value to pass.
+    /// </param>
     public void SetColor(int val) // 0 = default, 1 = transparent, 2 = selected
     {
         if (val == 0)
@@ -62,6 +68,9 @@ public class Cell : MonoBehaviour
     {
         return guess;
     }
+    /// <summary>
+    /// Clears the cell's guess value.
+    /// </summary>
     public void Clear()
     {
         guess = 0;
