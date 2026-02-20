@@ -22,7 +22,6 @@ public class Game : MonoBehaviour
     {
         AssignArray();
         GenerateNewBoard();
-        print(BoardIsSolvable());
     }
     /// <summary>
     /// Sets up the cell board by assigning each cell to the array and initializing their data.
