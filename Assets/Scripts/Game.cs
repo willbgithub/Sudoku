@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 using static UnityEngine.Rendering.DebugUI.Table;
@@ -20,7 +21,78 @@ public class Game : MonoBehaviour
     {
         AssignArray();
         GenerateNewBoard();
-        //print(BoardIsSolvable());
+        print(BoardIsSolvable());
+    }
+    private void Update()
+    {
+        if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
+        {
+            OnLeft();
+        }
+        if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
+        {
+            OnRight();
+        }
+        if (Keyboard.current.upArrowKey.wasPressedThisFrame)
+        {
+            OnUp();
+        }
+        if (Keyboard.current.downArrowKey.wasPressedThisFrame)
+        {
+            OnDown();
+        }
+    }
+    public void OnLeft()
+    {
+        if (!selected)
+        {
+            return;
+        }
+        Vector2Int newCoordinate = selection.GetCoordinate() + new Vector2Int(-1, 0);
+        if (!IsValidCoordinate(newCoordinate))
+        {
+            return;
+        }
+        ChangeSelection(cells[newCoordinate.x, newCoordinate.y]);
+    }
+    public void OnRight()
+    {
+        if (!selected)
+        {
+            return;
+        }
+        Vector2Int newCoordinate = selection.GetCoordinate() + new Vector2Int(1, 0);
+        if (!IsValidCoordinate(newCoordinate))
+        {
+            return;
+        }
+        ChangeSelection(cells[newCoordinate.x, newCoordinate.y]);
+    }
+    public void OnUp()
+    {
+        if (!selected)
+        {
+            return;
+        }
+        Vector2Int newCoordinate = selection.GetCoordinate() + new Vector2Int(0, -1);
+        if (!IsValidCoordinate(newCoordinate))
+        {
+            return;
+        }
+        ChangeSelection(cells[newCoordinate.x, newCoordinate.y]);
+    }
+    public void OnDown()
+    {
+        if (!selected)
+        {
+            return;
+        }
+        Vector2Int newCoordinate = selection.GetCoordinate() + new Vector2Int(0, 1);
+        if (!IsValidCoordinate(newCoordinate))
+        {
+            return;
+        }
+        ChangeSelection(cells[newCoordinate.x, newCoordinate.y]);
     }
     public void OnCellPointerEnter(Cell cell)
     {
@@ -223,6 +295,15 @@ public class Game : MonoBehaviour
             }
         }
         cell.SetColor(2);
+
+        if (debug)
+        {
+            List<int> targetFieldAnswers = GetTargetFieldAnswers(cell);
+            if (targetFieldAnswers.Contains(cell.GetValue()))
+            {
+                print("uh freaking oh.");
+            }
+        }
     }
     private void EmptySelection(bool voluntary = false)
     {
@@ -287,13 +368,13 @@ public class Game : MonoBehaviour
                 revealed.Add(cell);
             }
         }
-        // Unreveal until board is just one step away from being unsolvable
-        while (BoardIsSolvable())
-        {
-            Cell cell = revealed[Random.Range(0, revealed.Count - 1)];
-            cell.SetRevealed(false);
-            revealed.Remove(cell);
-        }
+        //// Unreveal until board is just one step away from being unsolvable
+        //while (BoardIsSolvable())
+        //{
+        //    Cell cell = revealed[Random.Range(0, revealed.Count - 1)];
+        //    cell.SetRevealed(false);
+        //    revealed.Remove(cell);
+        //}
     }
     private bool IsValidCoordinate(Vector2Int coordinate)
     {
