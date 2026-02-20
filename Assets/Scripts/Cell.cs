@@ -16,10 +16,12 @@ public class Cell : MonoBehaviour
 
     public void OnPointerEnter(BaseEventData data)
     {
+        print("OnPointerEnter " + coordinate);
         game.OnCellPointerEnter(this);
     }
     public void OnPointerExit(BaseEventData data)
     {
+        print("OnPointerExit " + coordinate);
         game.OnCellPointerExit(this);
     }
     public void OnPointerClick(BaseEventData data)
