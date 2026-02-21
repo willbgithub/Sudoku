@@ -53,12 +53,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   background: {fileID: 8491857330987777960}
   text: {fileID: 3489179619368862459}
-  defaultColor: {r: 1, g: 0.84313726, b: 0.7490196, a: 1}
-  transparent: {r: 0.30927375, g: 0.37272078, b: 0.4716981, a: 1}
-  selected: {r: 0.08321467, g: 0.17600375, b: 0.3207547, a: 1}
-  defaultText: {r: 0.5568628, g: 0, b: 0.105882354, a: 1}
-  selectedText: {r: 1, g: 1, b: 1, a: 1}
-  penText: {r: 1, g: 0, b: 0.561501, a: 1}
+  backgroundDefault: {r: 0.9960785, g: 0.8431373, b: 0.7490196, a: 1}
+  backgroundField: {r: 0.15566039, g: 0.5061201, b: 1, a: 1}
+  backgroundOrigin: {r: 0.740566, g: 0.84916633, b: 1, a: 1}
+  penDefault: {r: 0.25943398, g: 0.43743238, b: 1, a: 1}
+  penField: {r: 0, g: 0.16178359, b: 0.4433962, a: 1}
+  penOrigin: {r: 0, g: 0.020102331, b: 0.5660378, a: 1}
+  pencilDefault: {r: 0.25882354, g: 0.4392157, b: 1, a: 1}
+  pencilField: {r: 0, g: 0.16078432, b: 0.44313726, a: 1}
+  pencilOrigin: {r: 0, g: 0.019607844, b: 0.5647059, a: 1}
+  revealedDefault: {r: 0.5568628, g: 0, b: 0.10980393, a: 1}
+  revealedField: {r: 0.5568628, g: 0, b: 0.10980393, a: 1}
+  revealedOrigin: {r: 0.5568628, g: 0, b: 0.10980393, a: 1}
 --- !u!114 &2904126686646941439
 MonoBehaviour:
   m_ObjectHideFlags: 0
