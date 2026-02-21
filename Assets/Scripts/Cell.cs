@@ -141,26 +141,20 @@ public class Cell : MonoBehaviour
         }
         else
         {
+            guess = 0;
+            text.GetComponent<TMP_Text>().text = "";
             text.GetComponent<TMP_Text>().fontStyle = FontStyles.Italic;
-            if (theme == THEME.DEFAULT)
+            switch (theme)
             {
-                text.GetComponent<TMP_Text>().color = penDefault;
-            }
-            else if (theme == THEME.FIELD)
-            {
-                text.GetComponent<TMP_Text>().color = penField;
-            }
-            else if (theme == THEME.ORIGIN)
-            {
-                text.GetComponent<TMP_Text>().color = penOrigin;
-            }
-            if (guess == 0)
-            {
-                text.GetComponent<TMP_Text>().text = "";
-            }
-            else
-            {
-                text.GetComponent<TMP_Text>().text = guess.ToString();
+                case THEME.DEFAULT:
+                    text.GetComponent<TMP_Text>().color = penDefault;
+                    break;
+                case THEME.FIELD:
+                    text.GetComponent<TMP_Text>().color = penField;
+                    break;
+                case THEME.ORIGIN:
+                    text.GetComponent<TMP_Text>().color = penOrigin;
+                    break;
             }
         }
     }

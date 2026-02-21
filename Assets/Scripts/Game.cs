@@ -16,36 +16,55 @@ public class Game : MonoBehaviour
     [SerializeField] private GameObject cellPrefab, cellBoard;
     private Cell selection;
     private bool selected = false;
+    [SerializeField] private int difficulty = 0; // 0 is easiest, 10 is hardest. Counts how many bonus cells to not reveal.
 
     //[SerializeField] private bool debug = false;
 
     public void LETERRIP()
     {
+        // "Disposable" cells are cells that can be unrevealed while keeping the puzzle solvable
+        List<Cell> disposableCells = new List<Cell>();
+        List<Cell> unrevealed = new List<Cell>();
         // Reveal all cells
-        List<Cell> revealed = new List<Cell>();
         for (int row = 0; row < SIZE; row++)
         {
             for (int column = 0; column < SIZE; column++)
             {
                 Cell cell = cells[column, row];
                 cell.SetRevealed(true);
-                revealed.Add(cell);
+                disposableCells.Add(cells[column, row]);
             }
         }
+        // sanity check
         if (!BoardIsSolvable())
         {
             print("HOW!!!!!!");
             return;
         }
-        Cell selectedCell = null;
-        while (BoardIsSolvable())
+
+        // Unreveal cells until there are disposable cells left
+        while (disposableCells.Count > 0)
         {
-            selectedCell = revealed[Random.Range(0, revealed.Count-1)];
+            Cell selectedCell = disposableCells[Random.Range(0, disposableCells.Count - 1)];
             selectedCell.SetRevealed(false);
-            selectedCell.Clear();
-            revealed.Remove(selectedCell);
+            disposableCells.Remove(selectedCell);
+            if (!BoardIsSolvable())
+            {
+                // Reverse it! this cell is necessary to have the board remain solvable
+                selectedCell.SetRevealed(true);
+            }
+            else
+            {
+                // Commit to unrevealing the cell
+                unrevealed.Add(selectedCell);
+            }
         }
-        selectedCell.SetRevealed(true);
+        for (int i = 10; i >= difficulty; i--)
+        {   
+            Cell selectedCell = unrevealed[Random.Range(0, unrevealed.Count - 1)];
+            selectedCell.SetRevealed(true);
+            unrevealed.Remove(selectedCell);
+        }
         print("WE DID TI");
     }
     public void DebugIdleCellExists()
@@ -142,6 +161,16 @@ public class Game : MonoBehaviour
     // ---------SETUP---------
     void Start()
     {
+        if (difficulty < 0)
+        {
+            print(difficulty + " is an invalid difficulty setting. Must be between 0 and 10.");
+            difficulty = 0;
+        }
+        else if (difficulty > 10)
+        {
+            print(difficulty + " is an invalid difficulty setting. Must be between 0 and 10.");
+            difficulty = 10;
+        }
         AssignArray();
         GenerateNewBoard();
     }
@@ -180,7 +209,6 @@ public class Game : MonoBehaviour
             for (int column = 0; column < SIZE; column++)
             {
                 Cell cell = cells[column, row];
-                cell.Clear();
                 cell.SetValue(0);
                 cell.SetRevealed(false);
 

@@ -5950,6 +5950,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   cellPrefab: {fileID: 1573156955268885206, guid: dc5884eea2f92b6428187033b5de0c6c, type: 3}
   cellBoard: {fileID: 1701732461}
+  difficulty: 0
 --- !u!4 &948537099
 Transform:
   m_ObjectHideFlags: 0
