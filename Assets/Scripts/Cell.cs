@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class Cell : MonoBehaviour
 {
-    [SerializeField] private GameObject background, text;
+    [SerializeField] private GameObject background, text, pencils;
     private int value, guess; // value is 0 if not locked
     private Vector2Int coordinate, box;
     [SerializeField] private Color backgroundDefault, backgroundField, backgroundOrigin, penDefault, penField, penOrigin, pencilDefault, pencilField, pencilOrigin, revealedDefault, revealedField, revealedOrigin;
@@ -123,6 +123,7 @@ public class Cell : MonoBehaviour
         revealed = val;
         if (revealed)
         {
+            pencils.SetActive(false);
             guess = value;
             text.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
             if (theme == THEME.DEFAULT)
@@ -160,6 +161,13 @@ public class Cell : MonoBehaviour
     }
     public void TogglePencil(int val)
     {
+        if (revealed || val < 0 || val > 9)
+        {
+            return;
+        }
+        text.SetActive(false);
+        GameObject pencilText = pencils.transform.GetChild(val - 1).gameObject;
+        pencilText.SetActive(!pencilText.activeSelf);
         // remember; when setting the color of the pencil text, use:
         //if (theme == THEME.DEFAULT)
         //{
@@ -173,6 +181,7 @@ public class Cell : MonoBehaviour
         //{
         //    pencils[val].GetComponent<TMP_Text>().color = pencilOrigin;
         //}
+
     }
     public bool GetRevealed()
     {
@@ -185,6 +194,7 @@ public class Cell : MonoBehaviour
         {
             return;
         }
+        pencils.SetActive(false);
         text.GetComponent<TMP_Text>().fontStyle = FontStyles.Italic;
         if (theme == THEME.DEFAULT)
         {

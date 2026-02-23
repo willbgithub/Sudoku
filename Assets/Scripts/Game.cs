@@ -65,7 +65,6 @@ public class Game : MonoBehaviour
             selectedCell.SetRevealed(true);
             unrevealed.Remove(selectedCell);
         }
-        print("WE DID TI");
     }
     public void DebugIdleCellExists()
     {
@@ -173,6 +172,7 @@ public class Game : MonoBehaviour
         }
         AssignArray();
         GenerateNewBoard();
+        LETERRIP();
     }
     /// <summary>
     /// Sets up the cell board by assigning each cell to the array and initializing their data.
@@ -249,11 +249,6 @@ public class Game : MonoBehaviour
                 cells[column, row].Clear();
             }
         }
-        if (counter >= 150)
-        {
-            print("anti-crash activated! calling SolveCell(cells[4, 4])");
-            print(SolveCell(cells[4, 4]));
-        }
         return solvable;
     }
     /// <summary>
@@ -309,7 +304,6 @@ public class Game : MonoBehaviour
             if (uniqueAnswers.Count == 1)
             {
                 // Unique answer found. Solving.
-                print("Cell solved. Unique potential answer.");
                 cell.SetGuess(uniqueAnswers[0]);
                 return true;
             }
@@ -346,7 +340,6 @@ public class Game : MonoBehaviour
     /// <returns></returns>
     private bool IdleCellExists()
     {
-        print("IdleCellExists() called");
         for (int row = 0; row < SIZE; row++)
         {
             for (int column = 0; column < SIZE; column++)
@@ -359,7 +352,6 @@ public class Game : MonoBehaviour
                 }
             }
         }
-        print("No idle cells found.");
         return false;
     }
     /// <summary>
