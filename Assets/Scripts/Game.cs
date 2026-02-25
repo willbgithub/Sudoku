@@ -13,11 +13,12 @@ public class Game : MonoBehaviour
 {
     private const int SIZE = 9;
     private Cell[,] cells = new Cell[SIZE,SIZE];
-    [SerializeField] private GameObject cellPrefab, cellBoard;
+    [SerializeField] private GameObject cellPrefab, cellBoard, penButton, pencilButton;
     private Cell selection;
     private bool selected = false;
     [SerializeField] private int difficulty = 0; // 0 is easiest, 10 is hardest. Counts how many bonus cells to not reveal.
-
+    public enum WRITE_MODE {PENCIL, PEN}
+    private WRITE_MODE writeMode;
     //[SerializeField] private bool debug = false;
 
     public void LETERRIP()
@@ -170,6 +171,7 @@ public class Game : MonoBehaviour
             print(difficulty + " is an invalid difficulty setting. Must be between 0 and 10.");
             difficulty = 10;
         }
+        SwitchWritingMode(WRITE_MODE.PENCIL);
         AssignArray();
         GenerateNewBoard();
         LETERRIP();
@@ -210,6 +212,7 @@ public class Game : MonoBehaviour
             {
                 Cell cell = cells[column, row];
                 cell.SetValue(0);
+                cell.Clear();
                 cell.SetRevealed(false);
 
             }
@@ -225,7 +228,7 @@ public class Game : MonoBehaviour
     /// <returns></returns>
     private bool BoardIsSolvable()
     {
-        print("BoardIsSolvable() called");
+        //print("BoardIsSolvable() called");
         bool solvable = true;
         int counter = 0;
         while (IdleCellExists() && solvable && counter < 150)
@@ -273,7 +276,7 @@ public class Game : MonoBehaviour
         // If there is only one potential answer, solve it
         if (potentialAnswers.Count == 1)
         {
-            print("Cell solved. Only one potential answer.");
+            //print("Cell solved. Only one potential answer.");
             cell.SetGuess(potentialAnswers[0]);
             return true;
         }
@@ -347,7 +350,7 @@ public class Game : MonoBehaviour
                 // if a cell is not solved or not guessed, then there is an idle cell. return true
                 if (IsIdleCell(cells[column, row]))
                 {
-                    print("Found idle cell: " + new Vector2Int(column, row));
+                    //print("Found idle cell: " + new Vector2Int(column, row));
                     return true;
                 }
             }
@@ -674,6 +677,111 @@ public class Game : MonoBehaviour
         {
             OnDown();
         }
+        if (Keyboard.current.pKey.wasPressedThisFrame)
+        {
+            ToggleWritingMode();
+        }
+        if (Keyboard.current.digit1Key.wasPressedThisFrame)
+        {
+            Write(1);
+        }
+        if (Keyboard.current.digit2Key.wasPressedThisFrame)
+        {
+            Write(2);
+        }
+        if (Keyboard.current.digit3Key.wasPressedThisFrame)
+        {
+            Write(3);
+        }
+        if (Keyboard.current.digit4Key.wasPressedThisFrame)
+        {
+            Write(4);
+        }
+        if (Keyboard.current.digit5Key.wasPressedThisFrame)
+        {
+            Write(5);
+        }
+        if (Keyboard.current.digit6Key.wasPressedThisFrame)
+        {
+            Write(6);
+        }
+        if (Keyboard.current.digit7Key.wasPressedThisFrame)
+        {
+            Write(7);
+        }
+        if (Keyboard.current.digit8Key.wasPressedThisFrame)
+        {
+            Write(8);
+        }
+        if (Keyboard.current.digit9Key.wasPressedThisFrame)
+        {
+            Write(9);
+        }
+        if (Keyboard.current.digit0Key.wasPressedThisFrame)
+        {
+            Write(0);
+        }
+    }
+    public void ToggleWritingMode()
+    {
+        if (writeMode == WRITE_MODE.PENCIL)
+        {
+            SwitchWritingMode(WRITE_MODE.PEN);
+        }
+        else if (writeMode == WRITE_MODE.PEN)
+        {
+            SwitchWritingMode(WRITE_MODE.PENCIL);
+        }
+    }
+    public void SwitchWritingMode(WRITE_MODE write)
+    {
+        writeMode = write;
+        if (writeMode == WRITE_MODE.PENCIL)
+        {
+            pencilButton.GetComponent<Image>().color = Color.white;
+            penButton.GetComponent<Image>().color = Color.gray;
+        }
+        else if (writeMode == WRITE_MODE.PEN)
+        {
+            pencilButton.GetComponent<Image>().color = Color.gray;
+            penButton.GetComponent<Image>().color = Color.white;
+        }
+    }
+    public void OnPencilButtonClick()
+    {
+        SwitchWritingMode(WRITE_MODE.PENCIL);
+    }
+    public void OnPenButtonClick()
+    {
+        SwitchWritingMode(WRITE_MODE.PEN);
+    }
+    public void Write(int val)
+    {
+        if (!selection)
+        {
+            print("No cell selected!");
+            return;
+        }
+        if (selection.GetRevealed())
+        {
+            print("Cell already revealed!");
+            return;
+        }
+        if (val == 0)
+        {
+            // Erase
+            selection.Clear();
+            return;
+        }
+        if (writeMode == WRITE_MODE.PENCIL)
+        {
+            selection.TogglePencil(val);
+        }
+        else if (writeMode == WRITE_MODE.PEN)
+        {
+            selection.SetGuess(val);
+        }
+
     }
     public void OnLeft()
     {

@@ -63,6 +63,7 @@ public class Cell : MonoBehaviour
         if (val == THEME.DEFAULT)
         {
             background.GetComponent<Image>().color = backgroundDefault;
+            SetPencilColor(pencilDefault);
             if (revealed)
             {
                 // Revealed
@@ -77,6 +78,7 @@ public class Cell : MonoBehaviour
         else if (val == THEME.FIELD)
         {
             background.GetComponent<Image>().color = backgroundField;
+            SetPencilColor(pencilField);
             if (revealed)
             {
                 // Revealed
@@ -91,6 +93,7 @@ public class Cell : MonoBehaviour
         else if (val == THEME.ORIGIN)
         {
             background.GetComponent<Image>().color = backgroundOrigin;
+            SetPencilColor(penOrigin);
             if (revealed)
             {
                 // Revealed
@@ -123,7 +126,10 @@ public class Cell : MonoBehaviour
         revealed = val;
         if (revealed)
         {
-            pencils.SetActive(false);
+            for (int i = 0; i < 9; i++)
+            {
+                pencils.transform.GetChild(i).gameObject.SetActive(false);
+            }
             guess = value;
             text.GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
             if (theme == THEME.DEFAULT)
@@ -157,6 +163,14 @@ public class Cell : MonoBehaviour
                     text.GetComponent<TMP_Text>().color = penOrigin;
                     break;
             }
+        }
+    }
+    public void SetPencilColor(Color color)
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            GameObject pencilText = pencils.transform.GetChild(i).gameObject;
+            pencilText.GetComponent<TMP_Text>().color = color;
         }
     }
     public void TogglePencil(int val)
@@ -194,7 +208,11 @@ public class Cell : MonoBehaviour
         {
             return;
         }
-        pencils.SetActive(false);
+        text.SetActive(true);
+        for (int i = 0; i < 9; i++)
+        {
+            pencils.transform.GetChild(i).gameObject.SetActive(false);
+        }
         text.GetComponent<TMP_Text>().fontStyle = FontStyles.Italic;
         if (theme == THEME.DEFAULT)
         {
@@ -225,6 +243,10 @@ public class Cell : MonoBehaviour
         }
         guess = 0;
         text.GetComponent<TMP_Text>().text = "";
+        for (int i = 0; i < 9; i++)
+        {
+            pencils.transform.GetChild(i).gameObject.SetActive(false);
+        }
     }
     public void SetCoordinate(Vector2Int val)
     {
