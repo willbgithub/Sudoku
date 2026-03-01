@@ -3,6 +3,7 @@ using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class Cell : MonoBehaviour
 {
@@ -10,11 +11,13 @@ public class Cell : MonoBehaviour
     private int value, guess; // value is 0 if not locked
     private Vector2Int coordinate, box;
     [SerializeField] private Color backgroundDefault, backgroundField, backgroundOrigin, penDefault, penField, penOrigin, pencilDefault, pencilField, pencilOrigin, revealedDefault, revealedField, revealedOrigin;
-    private bool revealed = false;
+    private STATE state = STATE.PENCIL;
     private THEME theme = THEME.DEFAULT;
     private Game game;
+    private List<int> pencilHistory = new List<int>();
 
-    public enum THEME { DEFAULT, FIELD, ORIGIN}
+    public enum STATE { PENCIL, PEN, REVEALED }
+    public enum THEME { DEFAULT, FIELD, ORIGIN }
 
     public override string ToString()
     {
@@ -23,14 +26,14 @@ public class Cell : MonoBehaviour
     /// <summary>
     /// Returns true if the guess matches the actual value, or if the cell is revealed.
     /// </summary>
-    /// <returns></returns>
+    /// <returns></returns
     public bool IsGuessCorrect()
     {
         if (value == 0)
         {
             return false;
         }
-        return revealed || (guess == value);
+        return (state == STATE.REVEALED) || (guess == value);
     }
     public void OnPointerEnter(BaseEventData data)
     {
@@ -64,7 +67,7 @@ public class Cell : MonoBehaviour
         {
             background.GetComponent<Image>().color = backgroundDefault;
             SetPencilColor(pencilDefault);
-            if (revealed)
+            if (state == STATE.REVEALED)
             {
                 // Revealed
                 text.GetComponent<TMP_Text>().color = revealedDefault;
@@ -79,7 +82,7 @@ public class Cell : MonoBehaviour
         {
             background.GetComponent<Image>().color = backgroundField;
             SetPencilColor(pencilField);
-            if (revealed)
+            if (state == STATE.REVEALED)
             {
                 // Revealed
                 text.GetComponent<TMP_Text>().color = revealedField;
@@ -94,7 +97,7 @@ public class Cell : MonoBehaviour
         {
             background.GetComponent<Image>().color = backgroundOrigin;
             SetPencilColor(penOrigin);
-            if (revealed)
+            if (state == STATE.REVEALED)
             {
                 // Revealed
                 text.GetComponent<TMP_Text>().color = revealedOrigin;
@@ -121,10 +124,10 @@ public class Cell : MonoBehaviour
     {
         return value;
     }
-    public void SetRevealed(bool val)
+    public void SetState(STATE val)
     {
-        revealed = val;
-        if (revealed)
+        state = val;
+        if (state == STATE.REVEALED)
         {
             for (int i = 0; i < 9; i++)
             {
@@ -173,15 +176,38 @@ public class Cell : MonoBehaviour
             pencilText.GetComponent<TMP_Text>().color = color;
         }
     }
+    public void UndoPencil()
+    {
+        if (pencilHistory.Count == 0)
+        {
+            return;
+        }
+        TogglePencil(pencilHistory[pencilHistory.Count - 1]);
+    }
+    public bool GetRevealed()
+    {
+        return state == STATE.REVEALED;
+    }
     public void TogglePencil(int val)
     {
-        if (revealed || val < 0 || val > 9)
+        if ((state == STATE.REVEALED) || val < 0 || val > 9)
         {
             return;
         }
         text.SetActive(false);
         GameObject pencilText = pencils.transform.GetChild(val - 1).gameObject;
-        pencilText.SetActive(!pencilText.activeSelf);
+        if (pencilText.activeSelf)
+        {
+            pencilText.SetActive(false);
+            pencilHistory.Remove(val);
+        }
+        else
+        {
+            state = STATE.PENCIL;
+            pencilText.SetActive(true);
+            pencilHistory.Add(val);
+        }
+        
         // remember; when setting the color of the pencil text, use:
         //if (theme == THEME.DEFAULT)
         //{
@@ -197,17 +223,18 @@ public class Cell : MonoBehaviour
         //}
 
     }
-    public bool GetRevealed()
+    public STATE GetState()
     {
-        return revealed;
+        return state;
     }
     public void SetGuess(int val)
     {
         guess = val;
-        if (revealed)
+        if (state == STATE.REVEALED)
         {
             return;
         }
+        state = STATE.PEN;
         text.SetActive(true);
         for (int i = 0; i < 9; i++)
         {
@@ -237,7 +264,7 @@ public class Cell : MonoBehaviour
     /// </summary>
     public void Clear()
     {
-        if (revealed)
+        if (state == STATE.REVEALED)
         {
             return;
         }
@@ -247,6 +274,7 @@ public class Cell : MonoBehaviour
         {
             pencils.transform.GetChild(i).gameObject.SetActive(false);
         }
+        pencilHistory.Clear();
     }
     public void SetCoordinate(Vector2Int val)
     {

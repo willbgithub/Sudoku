@@ -16,6 +16,7 @@ public class Game : MonoBehaviour
     [SerializeField] private GameObject cellPrefab, cellBoard, penButton, pencilButton;
     private Cell selection;
     private bool selected = false;
+    private bool shiftPen = false;
     [SerializeField] private int difficulty = 0; // 0 is easiest, 10 is hardest. Counts how many bonus cells to not reveal.
     public enum WRITE_MODE {PENCIL, PEN}
     private WRITE_MODE writeMode;
@@ -32,7 +33,7 @@ public class Game : MonoBehaviour
             for (int column = 0; column < SIZE; column++)
             {
                 Cell cell = cells[column, row];
-                cell.SetRevealed(true);
+                cell.SetState(Cell.STATE.REVEALED);
                 disposableCells.Add(cells[column, row]);
             }
         }
@@ -47,12 +48,12 @@ public class Game : MonoBehaviour
         while (disposableCells.Count > 0)
         {
             Cell selectedCell = disposableCells[Random.Range(0, disposableCells.Count - 1)];
-            selectedCell.SetRevealed(false);
+            selectedCell.SetState(Cell.STATE.PENCIL);
             disposableCells.Remove(selectedCell);
             if (!BoardIsSolvable())
             {
                 // Reverse it! this cell is necessary to have the board remain solvable
-                selectedCell.SetRevealed(true);
+                selectedCell.SetState(Cell.STATE.REVEALED);
             }
             else
             {
@@ -63,7 +64,7 @@ public class Game : MonoBehaviour
         for (int i = 10; i >= difficulty; i--)
         {   
             Cell selectedCell = unrevealed[Random.Range(0, unrevealed.Count - 1)];
-            selectedCell.SetRevealed(true);
+            selectedCell.SetState(Cell.STATE.REVEALED);
             unrevealed.Remove(selectedCell);
         }
     }
@@ -138,15 +139,6 @@ public class Game : MonoBehaviour
         }
         selection.Clear();
     }
-    public void DebugToggleReveal()
-    {
-        if (!selection)
-        {
-            print("No cell selected!");
-            return;
-        }
-        selection.SetRevealed(!selection.GetRevealed());
-    }
     public void DebugIsGuessCorrect()
     {
         if (!selection)
@@ -213,7 +205,7 @@ public class Game : MonoBehaviour
                 Cell cell = cells[column, row];
                 cell.SetValue(0);
                 cell.Clear();
-                cell.SetRevealed(false);
+                cell.SetState(Cell.STATE.PENCIL);
 
             }
         }
@@ -681,6 +673,18 @@ public class Game : MonoBehaviour
         {
             ToggleWritingMode();
         }
+        if (Keyboard.current.backspaceKey.wasPressedThisFrame)
+        {
+            OnBackspace();
+        }
+        if (Keyboard.current.leftShiftKey.wasPressedThisFrame)
+        {
+            OnShiftDown();
+        }
+        if (Keyboard.current.leftShiftKey.wasReleasedThisFrame)
+        {
+            OnShiftRelease();
+        }
         if (Keyboard.current.digit1Key.wasPressedThisFrame)
         {
             Write(1);
@@ -722,6 +726,44 @@ public class Game : MonoBehaviour
             Write(0);
         }
     }
+    public void OnBackspace()
+    {
+        if (!selection)
+        {
+            print("No cell selected!");
+            return;
+        }
+        if (selection.GetRevealed())
+        {
+            print("Cell already revealed!");
+            return;
+        }
+        if (selection.GetState() == Cell.STATE.PEN)
+        {
+            selection.Clear();
+        }
+        else
+        {
+            selection.UndoPencil();
+        }   
+    }
+    public void OnShiftDown()
+    {
+        if (writeMode == WRITE_MODE.PENCIL)
+        {
+            shiftPen = true;
+            SwitchWritingMode(WRITE_MODE.PEN);
+        }
+    }
+    public void OnShiftRelease()
+    {
+        if (!shiftPen)
+        {
+            return;
+        }
+        SwitchWritingMode(WRITE_MODE.PENCIL);
+        shiftPen = false;
+    }
     public void ToggleWritingMode()
     {
         if (writeMode == WRITE_MODE.PENCIL)
@@ -750,10 +792,12 @@ public class Game : MonoBehaviour
     public void OnPencilButtonClick()
     {
         SwitchWritingMode(WRITE_MODE.PENCIL);
+        shiftPen = false;
     }
     public void OnPenButtonClick()
     {
         SwitchWritingMode(WRITE_MODE.PEN);
+        shiftPen = false;
     }
     public void Write(int val)
     {
