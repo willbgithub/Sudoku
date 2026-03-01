@@ -10,14 +10,14 @@ public class Cell : MonoBehaviour
     [SerializeField] private GameObject background, text, pencils;
     private int value, guess; // value is 0 if not locked
     private Vector2Int coordinate, box;
-    [SerializeField] private Color backgroundDefault, backgroundField, backgroundOrigin, penDefault, penField, penOrigin, pencilDefault, pencilField, pencilOrigin, revealedDefault, revealedField, revealedOrigin;
+    [SerializeField] private Color backgroundDefault, backgroundField, backgroundOrigin, penDefault, penField, penOrigin, pencilDefault, pencilField, pencilOrigin, revealedDefault, revealedField, revealedOrigin, win, failure;
     private STATE state = STATE.PENCIL;
     private THEME theme = THEME.DEFAULT;
     private Game game;
     private List<int> pencilHistory = new List<int>();
 
     public enum STATE { PENCIL, PEN, REVEALED }
-    public enum THEME { DEFAULT, FIELD, ORIGIN }
+    public enum THEME { DEFAULT, FIELD, ORIGIN, FAILURE, WIN }
 
     public override string ToString()
     {
@@ -107,6 +107,15 @@ public class Cell : MonoBehaviour
                 // Guessed (pen)
                 text.GetComponent<TMP_Text>().color = penOrigin;
             }
+        }
+        else if (val == THEME.WIN)
+        {
+            background.GetComponent<Image>().color = win;
+            text.GetComponent<TMP_Text>().fontStyle = FontStyles.Normal;
+        }
+        else if (val == THEME.FAILURE)
+        {
+            background.GetComponent<Image>().color = failure;
         }
         // Error mode
         else

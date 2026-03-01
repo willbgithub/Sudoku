@@ -17,11 +17,46 @@ public class Game : MonoBehaviour
     private Cell selection;
     private bool selected = false;
     private bool shiftPen = false;
+    private bool won = false;
     [SerializeField] private int difficulty = 0; // 0 is easiest, 10 is hardest. Counts how many bonus cells to not reveal.
     public enum WRITE_MODE {PENCIL, PEN}
     private WRITE_MODE writeMode;
     //[SerializeField] private bool debug = false;
 
+    public void CheckForWin()
+    {
+        EmptySelection();
+        int row = 0;
+        int column = 0;
+        bool failure = false;
+        while (row < SIZE && !failure)
+        {
+            Cell cell = cells[column, row];
+            if (!cell.IsGuessCorrect())
+            {
+                failure = true;
+                cell.SetTheme(Cell.THEME.FAILURE);
+            }
+            column++;
+            if (column == SIZE)
+            {
+                row++;
+                column = 0;
+            }
+        }
+        if (failure)
+        {
+            return;
+        }
+        won = true;
+        for (row = 0; row < SIZE; row++)
+        {
+            for (column = 0; column < SIZE; column++)
+            {
+                cells[column, row].SetTheme(Cell.THEME.WIN);
+            }
+        }
+    }
     public void LETERRIP()
     {
         // "Disposable" cells are cells that can be unrevealed while keeping the puzzle solvable
@@ -197,6 +232,7 @@ public class Game : MonoBehaviour
     /// </summary>
     private void GenerateNewBoard()
     {
+        won = false;
         // Reset all cells
         for (int row = 0; row < SIZE; row++)
         {
@@ -728,6 +764,10 @@ public class Game : MonoBehaviour
     }
     public void OnBackspace()
     {
+        if (won)
+        {
+            return;
+        }
         if (!selection)
         {
             print("No cell selected!");
@@ -749,6 +789,10 @@ public class Game : MonoBehaviour
     }
     public void OnShiftDown()
     {
+        if (won)
+        {
+            return;
+        }
         if (writeMode == WRITE_MODE.PENCIL)
         {
             shiftPen = true;
@@ -757,6 +801,10 @@ public class Game : MonoBehaviour
     }
     public void OnShiftRelease()
     {
+        if (won)
+        {
+            return;
+        }
         if (!shiftPen)
         {
             return;
@@ -766,6 +814,10 @@ public class Game : MonoBehaviour
     }
     public void ToggleWritingMode()
     {
+        if (won)
+        {
+            return;
+        }
         if (writeMode == WRITE_MODE.PENCIL)
         {
             SwitchWritingMode(WRITE_MODE.PEN);
@@ -777,6 +829,10 @@ public class Game : MonoBehaviour
     }
     public void SwitchWritingMode(WRITE_MODE write)
     {
+        if (won)
+        {
+            return;
+        }
         writeMode = write;
         if (writeMode == WRITE_MODE.PENCIL)
         {
@@ -791,16 +847,28 @@ public class Game : MonoBehaviour
     }
     public void OnPencilButtonClick()
     {
+        if (won)
+        {
+            return;
+        }
         SwitchWritingMode(WRITE_MODE.PENCIL);
         shiftPen = false;
     }
     public void OnPenButtonClick()
     {
+        if (won)
+        {
+            return;
+        }
         SwitchWritingMode(WRITE_MODE.PEN);
         shiftPen = false;
     }
     public void Write(int val)
     {
+        if (won)
+        {
+            return;
+        }
         if (!selection)
         {
             print("No cell selected!");
@@ -829,6 +897,10 @@ public class Game : MonoBehaviour
     }
     public void OnLeft()
     {
+        if (won)
+        {
+            return;
+        }
         if (!selected)
         {
             return;
@@ -842,6 +914,10 @@ public class Game : MonoBehaviour
     }
     public void OnRight()
     {
+        if (won)
+        {
+            return;
+        }
         if (!selected)
         {
             return;
@@ -855,6 +931,10 @@ public class Game : MonoBehaviour
     }
     public void OnUp()
     {
+        if (won)
+        {
+            return;
+        }
         if (!selected)
         {
             return;
@@ -868,6 +948,10 @@ public class Game : MonoBehaviour
     }
     public void OnDown()
     {
+        if (won)
+        {
+            return;
+        }
         if (!selected)
         {
             return;
@@ -881,6 +965,10 @@ public class Game : MonoBehaviour
     }
     public void OnCellPointerEnter(Cell cell)
     {
+        if (won)
+        {
+            return;
+        }
         if (selected)
         {
             return;
@@ -893,7 +981,10 @@ public class Game : MonoBehaviour
     }
     public void OnCellPointerClick(Cell cell)
     {
-
+        if (won)
+        {
+            return;
+        }
         if (selected && selection == cell)
         {
             EmptySelection(true);
@@ -908,6 +999,10 @@ public class Game : MonoBehaviour
     /// <param name="voluntary"></param>
     private void ChangeSelection(Cell cell, bool voluntary = false)
     {
+        if (won)
+        {
+            return;
+        }
         if (voluntary)
         {
             selected = true;
@@ -932,6 +1027,10 @@ public class Game : MonoBehaviour
     }
     private void EmptySelection(bool voluntary = false)
     {
+        if (won)
+        {
+            return;
+        }
         if (voluntary)
         {
             selected = false;

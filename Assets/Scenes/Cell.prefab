@@ -392,6 +392,8 @@ MonoBehaviour:
   revealedDefault: {r: 0.5568628, g: 0, b: 0.10980393, a: 1}
   revealedField: {r: 0.5568628, g: 0, b: 0.10980393, a: 1}
   revealedOrigin: {r: 0.5568628, g: 0, b: 0.10980393, a: 1}
+  win: {r: 0.7490196, g: 0.99607843, b: 0.8246463, a: 1}
+  failure: {r: 1, g: 0.8271792, b: 0.33490568, a: 1}
 --- !u!114 &2904126686646941439
 MonoBehaviour:
   m_ObjectHideFlags: 0
