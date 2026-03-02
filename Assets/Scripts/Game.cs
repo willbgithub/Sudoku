@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
@@ -13,7 +14,7 @@ public class Game : MonoBehaviour
 {
     private const int SIZE = 9;
     private Cell[,] cells = new Cell[SIZE,SIZE];
-    [SerializeField] private GameObject cellPrefab, cellBoard, penButton, pencilButton;
+    [SerializeField] private GameObject cellPrefab, cellBoard, penButton, pencilButton, difficultySlider;
     private Cell selection;
     private bool selected = false;
     private bool shiftPen = false;
@@ -22,6 +23,13 @@ public class Game : MonoBehaviour
     public enum WRITE_MODE {PENCIL, PEN}
     private WRITE_MODE writeMode;
     //[SerializeField] private bool debug = false;
+
+    public void OnGenerateNewBoard()
+    {
+        difficulty = (int) difficultySlider.GetComponent<Slider>().value;
+        GenerateNewBoard();
+        LETERRIP();
+    }
 
     public void CheckForWin()
     {
@@ -82,7 +90,7 @@ public class Game : MonoBehaviour
         // Unreveal cells until there are disposable cells left
         while (disposableCells.Count > 0)
         {
-            Cell selectedCell = disposableCells[Random.Range(0, disposableCells.Count - 1)];
+            Cell selectedCell = disposableCells[UnityEngine.Random.Range(0, disposableCells.Count - 1)];
             selectedCell.SetState(Cell.STATE.PENCIL);
             disposableCells.Remove(selectedCell);
             if (!BoardIsSolvable())
@@ -98,7 +106,7 @@ public class Game : MonoBehaviour
         }
         for (int i = 10; i >= difficulty; i--)
         {   
-            Cell selectedCell = unrevealed[Random.Range(0, unrevealed.Count - 1)];
+            Cell selectedCell = unrevealed[UnityEngine.Random.Range(0, unrevealed.Count - 1)];
             selectedCell.SetState(Cell.STATE.REVEALED);
             unrevealed.Remove(selectedCell);
         }
@@ -242,9 +250,10 @@ public class Game : MonoBehaviour
                 cell.SetValue(0);
                 cell.Clear();
                 cell.SetState(Cell.STATE.PENCIL);
-
+                cell.SetTheme(Cell.THEME.DEFAULT);
             }
         }
+        EmptySelection();
         // Starts the generation algorithm.
         NextStep();
         
@@ -493,7 +502,7 @@ public class Game : MonoBehaviour
                 returnList.Add(cells[column, row]);
             }
         }
-        return returnList[Random.Range(0, returnList.Count)];
+        return returnList[UnityEngine.Random.Range(0, returnList.Count)];
     }
     /// <summary>
     /// Gets the potential answers a cell can have without contradicting another.
